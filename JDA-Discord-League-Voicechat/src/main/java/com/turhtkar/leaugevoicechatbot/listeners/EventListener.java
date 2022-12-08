@@ -1,5 +1,12 @@
 package com.turhtkar.leaugevoicechatbot.listeners;
 
+import java.util.Optional;
+
+import com.mongodb.internal.async.ErrorHandlingResultCallback;
+
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.channel.ChannelCreateEvent;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateAppliedTagsEvent;
@@ -16,6 +23,7 @@ import net.dv8tion.jda.api.events.guild.voice.GuildVoiceStreamEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceVideoEvent;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.ApplicationUpdatePrivilegesEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
@@ -24,13 +32,60 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.events.user.UserActivityEndEvent;
 import net.dv8tion.jda.api.events.user.UserActivityStartEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 public class EventListener extends ListenerAdapter {
 
 	@Override
 	public void onButtonInteraction(ButtonInteractionEvent event) {
-		// TODO Auto-generated method stub
-		super.onButtonInteraction(event);
+		if(event.getComponentId().equals("SignIn")) {
+			TextInput name = TextInput.create("firstName", "First Name", TextInputStyle.SHORT)
+					.setPlaceholder("Enter your first name or your nickname")
+					.setMinLength(1)
+					.setRequired(true)
+					.setValue("Wongi The Gay")
+					.build();
+			
+			TextInput SummonerName = TextInput.create("SummonerName","Summoner Name", TextInputStyle.SHORT)
+					.setPlaceholder("Enter your summonerName")
+					.setMinLength(1)
+					.setMaxLength(100)
+					.setRequired(true)
+					.setValue("Omerm123")
+					.build();
+			
+			Modal modal = Modal.create("signIn", "Sign your League Account")
+					.addActionRows(ActionRow.of(name), ActionRow.of(SummonerName))
+					.build();
+			event.replyModal(modal).queue();
+			event.getUser().openPrivateChannel().flatMap(channel -> channel.sendMessage("hello")).queue();
+		}
+		
+	}
+
+	@Override
+	public void onModalInteraction(ModalInteractionEvent event) {
+		if(event.getModalId().equals("signIn")) {
+			System.out.println(event.getValues());
+			String name = event.getValue("firstName").getAsString();
+            String SummonerName = event.getValue("SummonerName").getAsString();
+            
+//            Optional<Member> memberOptional = event.getGuild().getMembersByName(name, true).stream().findFirst();
+//            if (memberOptional.isPresent()) {
+//                //Reply to the user with the name and message
+//                event.reply("Sup, " + memberOptional.get().getAsMention() + "! " + SummonerName).queue();
+//            }else{
+//                //Reply to the user with the name and message
+//                event.reply("Sup, " + name + "! " + SummonerName).queue();
+//            }
+            event.reply("Sup, " + name + "! " +"we signed in your leauge account "+ SummonerName).queue();
+		}
+		
 	}
 
 	@Override
@@ -101,7 +156,9 @@ public class EventListener extends ListenerAdapter {
 
 	@Override
 	public void onGuildMemberJoin(GuildMemberJoinEvent event) {
-		
+		EmbedBuilder msg = new EmbedBuilder();
+		Button button1 = Button.success("SignIn", "Sign in");
+		event.getUser().openPrivateChannel().flatMap(channel -> channel.sendMessage("hello").setActionRow(button1)).queue();
 	}
 
 	@Override

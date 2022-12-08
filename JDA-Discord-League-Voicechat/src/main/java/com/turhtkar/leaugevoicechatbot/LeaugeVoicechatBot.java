@@ -14,13 +14,16 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.turhtkar.leaugevoicechatbot.threadManager.DbThreadController;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import com.turhtkar.leaugevoicechatbot.listeners.EventListener;
 
 /**
  * The Class LeaugeVoicechatBot.
@@ -45,6 +48,7 @@ public class LeaugeVoicechatBot {
 		builder.setStatus(OnlineStatus.ONLINE);
 		builder.setActivity(Activity.playing("with your mom"));
 		builder.enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.DIRECT_MESSAGES,GatewayIntent.GUILD_VOICE_STATES,GatewayIntent.MESSAGE_CONTENT,GatewayIntent.GUILD_MEMBERS);
+		builder.addEventListeners(new EventListener());
 		shardManager = builder.build();
 		
 	}
@@ -73,7 +77,7 @@ public class LeaugeVoicechatBot {
 	}
 
 
-	private static void createUsersCollection(MongoClient client) {
+	private static void addUser(MongoClient client, ButtonInteractionEvent event) {
 		MongoCollection<Document> users = client.getDatabase("LeaugeVoiceChatDB").getCollection("LeaugeUsers");
 		Document account = new Document();
 		account.append("PUUID", "1");
@@ -109,7 +113,10 @@ public class LeaugeVoicechatBot {
 		}
 		String MongoDBConnection = bot.getConfig().get("DBCONNECTION");
 		try(MongoClient client = MongoClients.create(MongoDBConnection)) {
-			createUsersCollection(client);
+			DbThreadController usersController = new DbThreadController(client);
+			Thread controller = new Thread(usersController);
+			controller.start();
+			addUser(client, null);
 			//different ways to print the databases
 			//======================================
 //			List<Document> dbDocuments = client.listDatabases().into(new ArrayList<>());
